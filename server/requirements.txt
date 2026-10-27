@@ -1,0 +1,8 @@
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.13 #connect python to the postgresql databse
+psycopg[binary]>=3.2.0 #modern PostgreSQL driver for SQLAlchemy
+python-dotenv>=1.0.0
+bcrypt>=5.0.0 #secure password hashing
+email-validator>=2.0.0 #email validation for Pydantic
