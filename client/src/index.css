@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  /* === Dhandho Brand Palette === */
+  --color-dhandho-green: #00a86b;
+  --color-dhandho-green-light: #e8f7ee;
+  --color-dhandho-green-dark: #059669;
+  --color-dhandho-cash: #16a34a;
+  --color-dhandho-udhar: #e11d48;
+  --color-dhandho-amber: #d97706;
+  --color-dhandho-surface: #fbfdfc;
+  --color-dhandho-card: #ffffff;
+  --color-dhandho-ink: #0f172a;
+  --color-dhandho-muted: #64748b;
+
+  /* === Google Fonts Typography === */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Outfit', 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* === Custom animations === */
+  --animate-fade-up: fade-up 0.6s ease forwards;
+  --animate-fade-in: fade-in 0.3s ease forwards;
+  --animate-float: float 3s ease-in-out infinite;
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+
+/* === Utilities === */
+@utility animate-fade-up { animation: var(--animate-fade-up); }
+@utility animate-fade-in { animation: var(--animate-fade-in); }
+@utility animate-float   { animation: var(--animate-float); }
+@utility font-display    { font-family: var(--font-display); }
+@utility tabular-nums    { font-variant-numeric: tabular-nums; }
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: #fbfdfc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings use the unique Outfit Google Font */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}

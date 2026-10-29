@@ -1,5 +1,17 @@
-from .user import Base, User
+from models.user import Base, User
+from models.product import Product
+from models.customer import Customer
+from models.supplier import Supplier
+from models.sale import Sale, SaleItem
+from models.purchase import Purchase, PurchaseItem
+from models.udhari import UdhariPayment
 
-# This line tells other Python files (like database.py) that if they import everything from this folder, 
-# they should expect to get the Base class and the User class.
-__all__ = ["Base", "User"]
+__all__ = [
+    "Base", "User",
+    "Product",
+    "Customer",
+    "Supplier",
+    "Sale", "SaleItem",
+    "Purchase", "PurchaseItem",
+    "UdhariPayment",
+]
