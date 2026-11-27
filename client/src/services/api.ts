@@ -253,3 +253,49 @@ export const purchasesService = {
     return res.data;
   },
 };
+
+export interface ProposalData {
+  proposal_id: string;
+  action: string;
+  status: string;
+  data: {
+    name: string;
+    price?: number;
+    stock?: number;
+    selling_price?: number;
+    buying_price?: number;
+    stock_quantity?: number;
+    unit?: string;
+  };
+}
+
+export const aiService = {
+  sendMessage: async (
+    text: string,
+    conversationId: string
+  ): Promise<{ response: string; proposal: ProposalData | null }> => {
+    const res = await api.post<{ response: string; proposal: ProposalData | null }>('/ai/chat', {
+      message: text,
+      conversation_id: conversationId,
+    });
+    return res.data;
+  },
+  approveProposal: async (
+    proposalId: string,
+    _conversationId: string
+  ): Promise<{ message: string; product_id?: number; product_name?: string; status?: string }> => {
+    const res = await api.post<{ message: string; product_id?: number; product_name?: string; status?: string }>(
+      '/ai/chat/approve',
+      {
+        proposal_id: proposalId,
+      }
+    );
+    return res.data;
+  },
+  rejectProposal: async (proposalId: string, _conversationId: string): Promise<{ message: string }> => {
+    const res = await api.post<{ message: string }>('/ai/chat/reject', {
+      proposal_id: proposalId,
+    });
+    return res.data;
+  },
+};

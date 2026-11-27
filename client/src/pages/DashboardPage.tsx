@@ -10,6 +10,7 @@ import {
   LogOut,
   RefreshCw,
   Home,
+  Bot,
 } from 'lucide-react';
 import {
   Product,
@@ -29,10 +30,12 @@ import PosBillingTab from '../components/dashboard/PosBillingTab';
 import ProductsTab from '../components/dashboard/ProductsTab';
 import KhataTab from '../components/dashboard/KhataTab';
 import PurchasesTab from '../components/dashboard/PurchasesTab';
+import AiAssistantDrawer from '../components/dashboard/AiAssistantDrawer';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'pos' | 'products' | 'khata' | 'purchases'>('overview');
+  const [isAiOpen, setIsAiOpen] = useState(false);
 
   // Backend state
   const [products, setProducts] = useState<Product[]>([]);
@@ -235,6 +238,26 @@ const DashboardPage: React.FC = () => {
         </main>
 
       </div>
+
+      {/* ── Floating Agent Button (Bottom Right) ── */}
+      <button
+        onClick={() => setIsAiOpen(true)}
+        className="fixed bottom-6 right-6 z-40 bg-[#00a86b] hover:bg-[#059669] text-white p-3.5 sm:px-4 sm:py-3 rounded-full shadow-lg shadow-emerald-700/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95 group"
+        title="Open AI Assistant"
+      >
+        <div className="relative">
+          <Bot className="w-5 h-5" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
+        </div>
+        <span className="text-xs font-bold tracking-wide">AI Assistant</span>
+      </button>
+
+      {/* ── AI Assistant Drawer ── */}
+      <AiAssistantDrawer
+        isOpen={isAiOpen}
+        onClose={() => setIsAiOpen(false)}
+        onRefresh={fetchAllData}
+      />
     </div>
   );
 };

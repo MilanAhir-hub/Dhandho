@@ -7,6 +7,7 @@ from routers.customers import router as customers_router
 from routers.suppliers import router as suppliers_router
 from routers.sales import router as sales_router
 from routers.purchases import router as purchases_router
+from routers.ai import router as ai_router
 
 app = FastAPI(
     title="Dhandho — Kirana Store Management API",
@@ -30,6 +31,7 @@ app.include_router(customers_router)
 app.include_router(suppliers_router)
 app.include_router(sales_router)
 app.include_router(purchases_router)
+app.include_router(ai_router)
 
 
 @app.get("/", tags=["Health"])

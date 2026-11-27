@@ -1,0 +1,175 @@
+================================================================================
+DHANDHO APPLICATION — BASIC KIRANA AI AUTOMATION PLAN (PROGRESS.TXT)
+================================================================================
+Updated: 2026-11-27
+Goal: Keep the AI assistant simple, reliable, and practical for an everyday
+Indian Kirana shopkeeper (easy English / Hindi / Hinglish, no complex tech or
+advanced analytics). No code changes made yet — audit & scope file only.
+
+--------------------------------------------------------------------------------
+1. CURRENT APPLICATION OVERVIEW
+--------------------------------------------------------------------------------
+Frontend (client/src/):
+- Dashboard tabs (DashboardPage.tsx):
+  * OverviewTab.tsx   -> Total sales, total udhari due, low stock count, recent 5 bills
+  * PosBillingTab.tsx -> Manual cart billing (Cash or Udhar) + Print receipt
+  * ProductsTab.tsx   -> View/search products, low stock filter, Add & Delete product
+  * KhataTab.tsx      -> View/search customers, pending udhar filter, Add customer, Pay udhar, Ledger
+  * PurchasesTab.tsx  -> View purchase orders & suppliers, Add supplier, Record Stock In
+  * AiAssistantDrawer.tsx -> Chat drawer with Approve / Reject proposal cards
+
+Backend (server/):
+- FastAPI + SQLAlchemy + PostgreSQL + LangGraph + Groq (ChatGroq)
+- Existing CRUD & Routes:
+  * /auth      -> register, login
+  * /products  -> add, list, low-stock, get, update (PATCH), delete
+  * /customers -> add, list, udhari list, get, update (PATCH), delete, pay-udhari, udhari-history
+  * /suppliers -> add, list, get, update (PATCH), delete
+  * /sales     -> create bill (auto-reduces stock & adds udhari), list, get
+  * /purchases -> record stock-in (auto-increases stock & updates buying price), list, get
+  * /ai        -> /ai/chat, /ai/proposal/approve (/ai/chat/approve), /ai/proposal/reject (/ai/chat/reject)
+
+
+--------------------------------------------------------------------------------
+2. FEATURES ALREADY AUTOMATED THROUGH THE AI AGENT
+--------------------------------------------------------------------------------
+Inspected in: server/ai/ (agent.py, graph/, prompts/, tools/, proposals.py),
+server/routers/ai.py, and client/src/components/dashboard/AiAssistantDrawer.tsx.
+
+A. WORKING TODAY
+1. Simple Store Chat (intent: "other")
+   - Understands casual greetings and simple questions in English, Hindi, or Hinglish.
+   - Remembers conversation context within the active server session (MemorySaver).
+
+2. Add New Product with Approval Card (action: "create_product")
+   - Shopkeeper says e.g. "Add Balaji Wafers price 20 stock 50".
+   - If name, price, or stock is missing, AI asks follow-up questions one by one.
+   - Saves a pending proposal in `ai_proposals` (30-min expiry, single-execution lock).
+   - Nothing is saved until the shopkeeper clicks Approve in AiAssistantDrawer.
+
+B. HALF-BUILT (STARTED IN CODE, NEEDS FIXING)
+3. Add New Supplier (action: "create_supplier")
+   - Prompt, validation (`supplier_tools.py`), proposal execution (`proposals.py`),
+     and `propose_node` logic exist.
+   - Broken right now because:
+     * `route_after_assistant()` in `server/ai/graph/nodes.py` only checks
+       `intent == "propose"` and ignores `intent == "create_supplier"`.
+     * `AiAssistantDrawer.tsx` hardcodes `create_product` labels and product fields
+       for every proposal card.
+
+C. NOTE ON OLDER TEST FILES
+- `server/test_ai_phase1.py` to `test_ai_phase4.py` and `test_natural_commands.py`
+  reference older read-only/analytics features (`proposals_store`, sales/revenue
+  queries, etc.) that are not present in the current `server/ai/` code.
+- `build_ai_graph(db)` in `server/ai/graph/workflow.py` currently ignores `db`,
+  so the agent cannot read products, stock, customers, or sales yet.
+
+
+--------------------------------------------------------------------------------
+3. BASIC KIRANA FEATURES THAT SHOULD BE AUTOMATED (SIMPLE & RELIABLE)
+--------------------------------------------------------------------------------
+Only practical, everyday dukaan work that saves time at the counter for a
+shopkeeper who may not be comfortable navigating multiple tabs, forms, and menus.
+
+=== A. QUICK READ-ONLY CHECKS (ZERO RISK TO DATA) ===
+
+1. Check Product Stock & Price ("Maal aur Rate Puchhna")
+   - Instead of opening Products tab and typing in search:
+   - Example: "Amul Taaza milk kitna bacha hai?", "Atta ka rate kya hai?"
+   - Reads from `products` table and replies in simple plain language.
+
+2. Check Low-Stock Items ("Khatam Hone Wala Saaman")
+   - Example: "Kaun kaun sa saaman khatam hone wala hai?"
+   - Uses `get_low_stock_products()` and gives a short, clear restock list.
+
+3. Check Customer Udhar / Khata ("Kispar Kitna Baki Hai")
+   - Instead of opening Khata tab -> filtering -> opening each customer ledger:
+   - Example: "Kis kis ka udhar baki hai?", "Ramesh Patel ka kitna baki hai?"
+   - Uses `get_customers_with_udhari()` and customer lookup.
+
+4. Simple Today's Summary ("Aaj Ki Bikri / Galla Hisaab")
+   - Example: "Aaj ki bikri batao" or "Aaj kitna cash aur kitna udhar hua?"
+   - Gives 3-4 clear numbers from `sales` + `udhari_payments` for today:
+     Total Sales, Cash Received, Udhar Given, and Udhar Collected.
+
+=== B. DAILY DUKAAN ACTIONS (ALWAYS WITH SIMPLE APPROVE / CANCEL CARD) ===
+
+5. Make a Quick Bill — Cash or Udhar (`POST /sales/`, PosBillingTab.tsx)
+   - Biggest time-saver at a busy counter so the shopkeeper does not have to
+     click products, adjust `+`/`-`, and select dropdowns manually.
+   - Example: "Ramesh bhai ke khate me 2 Tata Salt aur 1 Fortune Oil likh do"
+     or "Cash bill: 3 Parle-G aur 1 Amul Milk".
+   - Agent finds exact items & customer, checks available stock, shows a clear
+     bill preview (items, total, Cash/Udhar), and creates the bill only on Approve.
+
+6. Record Udhar Payment Received (`POST /customers/{id}/pay-udhari`, KhataTab.tsx)
+   - Example: "Ramesh Patel ne 500 rupaye jama kiye" or "Priya ne 300 GPay diya".
+   - Agent verifies customer & pending balance, shows Old Balance -> New Balance,
+     and records payment on Approve.
+
+7. Add Customer (`POST /customers/`, KhataTab.tsx)
+   - Example: "Naya grahak jodo Suresh Bhai, phone 9876543210".
+   - Checks duplicate phone number first, then creates on Approve.
+
+8. Finish Add Supplier (`POST /suppliers/`, PurchasesTab.tsx)
+   - Fix the half-built `create_supplier` routing and proposal card UI so adding
+     a wholesaler via chat works reliably end-to-end.
+
+9. Record Stock In / Purchase (`POST /purchases/`, PurchasesTab.tsx)
+   - Example: "Amul Agency se 20 liter Taaza milk 62 ke rate se aaya".
+   - Easier than opening Purchases modal and adding rows manually; auto-updates
+     stock and buying price after Approve.
+
+10. Simple Product Price / Unit / Stock Alert Update (`PATCH /products/{id}`)
+    - Note: `ProductsTab.tsx` currently has NO Edit button at all, even though
+      `PATCH /products/{id}` already exists in backend.
+    - Example: "Amul Butter ka price 285 kar do" or "Tata Salt ka low alert 10 kar do".
+    - Also improve `create_product` so it can accept `unit` (kg/packet/liter/piece)
+      and `buying_price` cleanly when mentioned, while keeping safe defaults.
+
+
+--------------------------------------------------------------------------------
+4. FEATURES THAT SHOULD STAY MANUAL (FOR SAFETY & SIMPLICITY)
+--------------------------------------------------------------------------------
+1. Deleting Products, Customers, or Suppliers (`DELETE` routes)
+   - Keep deletion manual in the UI with confirmation. Allowing voice/chat
+     commands to delete records is risky for non-technical users.
+2. Login & Signup (`/auth/login`, `/auth/register`)
+   - Keep standard form login/registration manual and deterministic.
+3. Receipt Printing (`window.print()` in PosBillingTab.tsx)
+   - Keep manual print button after a bill is confirmed.
+
+
+--------------------------------------------------------------------------------
+5. ADVANCED FEATURES EXCLUDED FOR NOW (OUT OF BASIC SCOPE)
+--------------------------------------------------------------------------------
+Intentionally NOT including these right now to keep the app simple and reliable:
+- Monthly comparison / growth % / gross profit margin BI analytics
+- Slow-moving / dead-stock analytics and catalog anomaly detection
+- Auto-generated supplier-grouped restock Purchase Orders with demand forecasting
+- Bulk invoice / WhatsApp text / image OCR parsing
+- Automated WhatsApp reminders or messaging API integration
+- Voice input / Text-to-Speech (can be reconsidered later only after text flows
+  are rock-solid)
+
+
+--------------------------------------------------------------------------------
+6. SMALL RELIABILITY FIXES NEEDED FOR A NON-TECHNICAL SHOPKEEPER
+--------------------------------------------------------------------------------
+1. Keep AI UI Simple (AiAssistantDrawer.tsx):
+   - Remove/hide developer SQL logs (`INSERT INTO products ...`, `public.products`,
+     `tool: create_product`) from the shopkeeper's chat bubble; show plain, clear
+     receipt details (Item, Rate, Qty, Total, Approve / Cancel) instead.
+2. Connect `db` into LangGraph (`server/ai/graph/workflow.py`):
+   - Needed so the agent can look up real products, stock, customers, and today's sales.
+3. Fix `create_supplier` Routing & Proposal Card Rendering:
+   - Route `create_supplier` to `propose_node` and render card fields based on
+     `proposal.action`.
+4. Clear Old Slot Data Between Requests (`server/ai/graph/state.py`):
+   - Clear previous `collected_data` when switching from one task/item to another
+     so fields from an earlier command never leak into a new proposal.
+5. Basic User / Store Safety (`server/routers/ai.py` & `client/src/services/api.ts`):
+   - Currently `user_id` defaults to `1` in requests and `LandingPage.tsx` exposes
+     the AI drawer before login. Scope the AI drawer to logged-in users and use
+     authenticated user context on the server.
+================================================================================
